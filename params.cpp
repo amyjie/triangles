@@ -1,29 +1,16 @@
-#include "cli.h"
+#include "params.h"
 
 /* The image we're operating on */
-char * IMAGE_PATH = 0;
+std::string IMAGE_PATH;
 
 /* Maximum number of triangles to attempt to draw the image with. */
 size_t GENOME_LENGTH = 10;
 
-/* "One At A Time Mode" - Number of generations before another triangle is
-   allowed to be expressed.
- */
-size_t OAAT_MODE = 0;
-
 /* Number of artists in each generation */
 size_t POPULATION_SIZE = 25;
 
-/* Number of generations to run */
-size_t GENERATIONS = 0;
-
-/* The top N Artists from each population will rollover into the next 
-   generation.
- */
-size_t ELITISM = 0;
-
-/* If true, elites do not mutate/crossover in the next round. */
-bool CLONE_ELITES = true;
+/* Amount of effort to put into finding a solution */
+size_t EFFORT = 10000; 
 
 /* srand() seed for repeatable testing */
 unsigned int RANDOM_SEED = time(NULL);
@@ -37,13 +24,6 @@ Xover_type XOVER_TYPE = Xover_type::TRIANGLE;
 /* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
 double MUTATION_RATE = 0.005;
 
-/* Enables/Disables Artist location. If set to 0 Artists will mate based on 
-   reproductive proportion only, and not take locality into account. If set
-   it will act as though artists are adjacent to N number of other artists 
-   and restrict mating choices to those artists.
- */
-uint8_t SIMULATE_LOCATION = 4;
-
 void parseArgs(int argc, char ** argv)
 {
     int c;
@@ -53,16 +33,12 @@ void parseArgs(int argc, char ** argv)
         {
             {"image",               required_argument, 0, 'i'},
             {"genome-length",       required_argument, 0, 'g'},
-            {"oaat-mode",           required_argument, 0, 'o'},
             {"population-size",     required_argument, 0, 'p'},
-            {"generations",         required_argument, 0, 'n'},
-            {"elitism",             required_argument, 0, 'e'},
-            {"clone-elites",        required_argument, 0, 'c'},
+            {"effort",              required_argument, 0, 'e'},
             {"random-seed",         required_argument, 0, 'r'},
             {"crossover-chance",    required_argument, 0, 'x'},
             {"crossover-type",      required_argument, 0, 't'},
             {"mutation-rate",       required_argument, 0, 'm'},
-            {"simulate-location",   required_argument, 0, 'l'},
             {0, 0, 0, 0}
         };
 
@@ -89,7 +65,7 @@ void parseArgs(int argc, char ** argv)
                 break;
 
             case 'i': {
-                IMAGE_PATH = strdup(optarg);
+                IMAGE_PATH = optarg;
                 break;
             }
             case 'g': {
@@ -105,44 +81,6 @@ void parseArgs(int argc, char ** argv)
                 }                
                 break;
             }
-            case 'o': {
-                int o = atoi(optarg);
-                if(o < 0)
-                {
-                    printf("Number of generations without improvement should be greater than 0.\n");
-                    exit(1);
-                }
-                else
-                {
-                    OAAT_MODE = (size_t)o;
-                }                
-                break;
-            }
-            case 'e': {
-                int e = atoi(optarg);
-                if(e < 0)
-                {
-                    printf("The number of elites must be greater than or equal to 0.\n");
-                    exit(1);
-                }
-                else
-                {
-                    ELITISM = (size_t)e;
-                }                
-                break;
-            }
-            case 'c': {
-                std::string c(optarg);
-                std::transform(c.begin(), c.end(), c.begin(), ::tolower);
-                if(c == "true") { CLONE_ELITES = true; }
-                else if(c == "false") { CLONE_ELITES = false; }
-                else
-                {
-                    printf("clone-elites must be \"true\" or \"false\".\nInput provided: %s\n", optarg);
-                    exit(1);
-                }
-                break;
-            }
             case 'p': {
                 int p = atoi(optarg);
                 if(p < 0)
@@ -156,16 +94,16 @@ void parseArgs(int argc, char ** argv)
                 }                
                 break;
             }
-            case 'n': {
-                int n = atoi(optarg);
-                if(n < 0)
+            case 'e': {
+                int e = atoi(optarg);
+                if(e < 0)
                 {
-                    printf("The number of generations must be greater than 0.\n");
+                    printf("Effort must be greater than 0.\n");
                     exit(1);
                 }
                 else
                 {
-                    GENERATIONS = n;
+                    EFFORT = e;
                 }
                 break;
             }
@@ -205,19 +143,6 @@ void parseArgs(int argc, char ** argv)
                 }
                 break;
             }
-            case 'l': {
-                int l = atoi(optarg);
-                if(l <= 1 && l != 0)
-                { 
-                    printf("Simulate-location must be either 0 or >1 in value.\nYou provided: %s\n", optarg);
-                    exit(1);
-                }
-                else
-                {
-                    SIMULATE_LOCATION = l;
-                }
-                break;
-            }
             case '?': {
                 break;
             }
@@ -226,8 +151,6 @@ void parseArgs(int argc, char ** argv)
             }
         }
     }
-  
-    /* Remaining non-option arguments */
 
     /* Image path is the default argument */
     if(optind < argc)
