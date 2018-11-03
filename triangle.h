@@ -40,6 +40,7 @@ struct __attribute__((__packed__)) Triangle {
 extern size_t BG_COLOR_OFFSET;
 extern size_t BG_COLOR_SIZE;
 extern size_t TRIANGLE_LIST_BEGIN;
+extern size_t TRIANGLE_SIZE;
 
 /* Compare two triangles */
 bool operator==(const Triangle& lhs, const Triangle& rhs);

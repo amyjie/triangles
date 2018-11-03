@@ -9,7 +9,8 @@ uint8_t * openImage(char * filename, unsigned & width, unsigned & height)
   error = lodepng_decode32_file(&image, &width, &height, filename); 
 
   if(error) {
-    printf("Error #%u in opening file: %s", error, lodepng_error_text(error));
+    printf("Error #%u in opening file: %s\n", error, lodepng_error_text(error));
+    exit(1);
   }
 
   /* Copy the image to the website */
@@ -28,7 +29,8 @@ void saveImage(char * filename, uint8_t * img, unsigned width, unsigned height)
 {
   image_error_t error = lodepng_encode32_file(filename, img, width, height);
   if(error) {
-    printf("Error #%u: %s", error, lodepng_error_text(error));
+    printf("Error #%u: %s\n", error, lodepng_error_text(error));
+    exit(1);
   }
 
   /* Copy the image to the website */

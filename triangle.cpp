@@ -4,6 +4,7 @@
 size_t BG_COLOR_OFFSET = 0;
 size_t BG_COLOR_SIZE = 4;
 size_t TRIANGLE_LIST_BEGIN = BG_COLOR_SIZE;
+size_t TRIANGLE_SIZE = sizeof(Triangle);
 
 /* Check if two triangles are the same. Ignores "visible" trait. */
 bool operator==(const Triangle& lhs, const Triangle& rhs)
