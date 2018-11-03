@@ -6,6 +6,6 @@
 
 #include <stdlib.h>
 
-#include "cli.h"
+#include "params.h"
 #include "image.h"
 

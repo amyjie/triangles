@@ -1,7 +1,7 @@
 #include "params.h"
 
 /* The image we're operating on */
-std::string IMAGE_PATH;
+char * IMAGE_PATH;
 
 /* Maximum number of triangles to attempt to draw the image with. */
 size_t GENOME_LENGTH = 10;
@@ -32,8 +32,6 @@ void parseArgs(int argc, char ** argv)
         static struct option long_options[] =
         {
             {"image",               required_argument, 0, 'i'},
-            {"genome-length",       required_argument, 0, 'g'},
-            {"population-size",     required_argument, 0, 'p'},
             {"effort",              required_argument, 0, 'e'},
             {"random-seed",         required_argument, 0, 'r'},
             {"crossover-chance",    required_argument, 0, 'x'},
@@ -65,7 +63,7 @@ void parseArgs(int argc, char ** argv)
                 break;
 
             case 'i': {
-                IMAGE_PATH = optarg;
+                IMAGE_PATH = strdup(optarg);
                 break;
             }
             case 'g': {

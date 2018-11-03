@@ -13,7 +13,7 @@
 typedef u_int8_t uint8_t;
 
 /* Path to the image that the artist is to draw */
-extern std::string IMAGE_PATH;
+extern char * IMAGE_PATH;
 
 /* Maximum number of triangles to attempt to draw the image with. Defaults to 
    10 triangles.

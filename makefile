@@ -4,29 +4,31 @@ OBJS = params.o lodepng.o image.o
 # Determine which OS we're on to determine the compiler
 OS := $(shell uname -s)
 ifeq ($(OS), Darwin)
-        CC = clang++
+        HOST_COMPILER = clang++
 endif
 ifeq ($(OS), Linux)
-        CC = nvcc 
+        HOST_COMPILER = nvcc 
 endif
 
 DEBUG = -O3
-CCFLAGS = -Wall -std=c++11 -c $(DEBUG)
+CCFLAGS = -std=c++11 -c $(DEBUG)
+
+NVCC:= $(HOST_COMPILER)
 
 triangles: main.o $(OBJS)
-	$(CC) main.o $(OBJS) $(DEBUG) -o $(NAME)
+	$(NVCC) main.o $(OBJS) $(DEBUG) -o $(NAME)
 
 main.o: main.h main.cpp params.h lodepng.h image.h
-	$(CC) $(CCFLAGS) $(IMAGE_MAGICK) main.cpp
+	$(NVCC) $(CCFLAGS) $(IMAGE_MAGICK) main.cpp
 
 params.o: params.h params.cpp
-	$(CC) $(CCFLAGS) params.cpp
+	$(NVCC) $(CCFLAGS) params.cpp
 
 lodepng.o: lodepng.cpp lodepng.h
-	$(CC) $(CCFLAGS) lodepng.cpp
+	$(NVCC) $(CCFLAGS) lodepng.cpp
 
 image.o: image.cpp image.h
-	$(CC) $(CCFLAGS) image.cpp
+	$(NVCC) $(CCFLAGS) image.cpp
   
 # Utility
 clean: 
