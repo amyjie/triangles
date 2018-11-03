@@ -2,6 +2,7 @@
 #define IMAGE_H
 
 #include <iostream>
+#include <fstream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +11,8 @@
 
 #define MAX_PNG_HEIGHT 1024
 #define MAX_PNG_WIDTH 1024
+
+#define WEBSITE_DIR "/var/www/html/tri/"
 
 typedef u_int8_t uint8_t;
 
@@ -25,5 +28,9 @@ typedef unsigned int image_error_t;
    for freeing it.
 */
 uint8_t * openImage(char * filename, unsigned & width, unsigned & height);
+
+/* Writes a buffer to a PNG at the current location. Does not free the buffer.
+*/
+void saveImage(char * filename, uint8_t * img, unsigned width, unsigned height);
 
 #endif

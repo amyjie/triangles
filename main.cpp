@@ -30,5 +30,9 @@ int main(int argc, char ** argv)
 
   std::cout << "Opened: " << IMAGE_PATH << "\t(" << width << "x" << height << ")" << std::endl;
 
+  /* Write the image to website so I can view it */
+  char artist_name[] = "artist.png";
+  saveImage(artist_name, image, width, height);
+
   return 0;
 }
