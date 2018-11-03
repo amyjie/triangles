@@ -1,36 +1,15 @@
 #include "image.h"
 
-/* Take the name of a PNG and returns an array of floats in RGB order */
-Magick::Image openImage(const char * filename)
+/* Take the name of a PNG and returns a vector of ints in RGB order */
+uint8_t * openImage(char * filename, unsigned & width, unsigned & height)
 {
-  /* Image dimensions */
-  size_t width;
-  size_t height;
+  
+  uint8_t * image;
+  image_error_t error;
+  error = lodepng_decode32_file(&image, &width, &height, filename); 
 
-  /* Store the image in the respecitve formats */
-  Magick::Image image;
-  try { 
-    image.read(filename);
-  } 
-  catch(Magick::Exception &error) 
-  { 
-      std::cerr << "Caught exception: " << error.what() << std::endl; 
-      exit(1); 
-  } 
-
-  width = image.columns();
-  height = image.rows();
-  if(width > MAX_PNG_WIDTH || height > MAX_PNG_HEIGHT)
-  {
-    std::cout << "Image dimensions must be between " << MAX_PNG_WIDTH << "x" << MAX_PNG_HEIGHT << "\n";
-    std::cout << filename << ": " << width << "x" << height << std::endl;
-
-    image.resize("1024>x1024>");
-
-    width = image.columns();
-    height = image.rows();
-
-    std::cout << "Resizing image to: " << width << "x" << height << std::endl;
+  if(error) {
+    printf("Error #%u in opening file: %s", error, lodepng_error_text(error));
   }
 
   return image;
