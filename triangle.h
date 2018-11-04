@@ -36,6 +36,16 @@ struct __attribute__((__packed__)) Triangle {
   bool visible : 1;
 };
 
+/* 4 bytes */
+struct Pixel {
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+  uint8_t a;
+};
+
+typedef Pixel RGBA;
+
 /* Mark important offsets */
 extern size_t BG_COLOR_OFFSET;
 extern size_t BG_COLOR_SIZE;

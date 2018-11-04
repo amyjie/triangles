@@ -9,6 +9,9 @@ size_t GENOME_LENGTH = 10;
 /* Number of artists in each generation */
 size_t POPULATION_SIZE = 25;
 
+/* Number of children the population produces each generation */
+size_t NUM_CHILDREN = 10;
+
 /* Amount of effort to put into finding a solution */
 size_t EFFORT = 10000; 
 
@@ -33,10 +36,13 @@ void parseArgs(int argc, char ** argv)
         {
             {"image",               required_argument, 0, 'i'},
             {"effort",              required_argument, 0, 'e'},
+            {"genome-length",       required_argument, 0, 'g'},
+            {"population-size",     required_argument, 0, 'p'},
+            {"number-of-children",  required_argument, 0, 'c'},
             {"random-seed",         required_argument, 0, 'r'},
-            {"crossover-chance",    required_argument, 0, 'x'},
-            {"crossover-type",      required_argument, 0, 't'},
             {"mutation-rate",       required_argument, 0, 'm'},
+            {"crossover-type",      required_argument, 0, 't'},
+            {"crossover-chance",    required_argument, 0, 'x'},
             {0, 0, 0, 0}
         };
 
@@ -44,7 +50,7 @@ void parseArgs(int argc, char ** argv)
         int option_index = 0;
 
         /* Short codes for characters */
-        const char * short_options = "i:g:o:e:c:p:n:r:x:t:m:l:";
+        const char * short_options = "i:e:g:p:c:r:m:t:x:";
 
         c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
@@ -76,6 +82,19 @@ void parseArgs(int argc, char ** argv)
                 else
                 {
                     GENOME_LENGTH = g;
+                }                
+                break;
+            }
+            case 'c': {
+                int c = atoi(optarg);
+                if(c < 0)
+                {
+                    printf("The number of children must be greater than 0.\n");
+                    exit(1);
+                }
+                else
+                {
+                    NUM_CHILDREN = c;
                 }                
                 break;
             }

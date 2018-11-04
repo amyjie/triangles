@@ -23,6 +23,11 @@ extern size_t GENOME_LENGTH;
 /* Number of artists in each generation. Defaults to 25 */
 extern size_t POPULATION_SIZE;
 
+/* Number of children the population produces each generation.
+   Defaults to 10.
+*/
+extern size_t NUM_CHILDREN;
+
 /* The amount of effort put into finding a solution. Effort is equal to:
    POPULATION_SIZE + NUMBER_OF_KIDS * NUM_GENERATIONS.
    Defaults to: 10,000

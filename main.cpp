@@ -23,6 +23,12 @@ int main(int argc, char ** argv)
 	uint8_t * image = openImage(IMAGE_PATH, width, height);
   std::cout << "Opened: " << IMAGE_PATH << "\t(" << width << "x" << height << ")" << std::endl;
 
+  /* Copy it to the GPU */
+  size_t image_size = 4 * width * height;
+  uint8_t * cuda_image = 0;
+  cudaMallocManaged(&cuda_image, image_size);
+  memcpy(cuda_image, image, image_size);
+
   /* Open a file to write the results */
   std::ofstream output_file;
 
@@ -41,29 +47,36 @@ int main(int argc, char ** argv)
   file_name += "_" + seed;
 
   output_file.open("output/" + file_name + ".tsv");
-   
-  /* Allocate the genomes in pinned host memory */
-  /* Let the driver know that some memory allocations will be pinned */
-  CUDA_EC(cudaSetDeviceFlags(cudaHostAllocMapped));
 
-  /* Calculate the size of the buffer */
+  /* Allocate genomes on the GPU */
   size_t genome_size = GENOME_LENGTH * TRIANGLE_SIZE + BG_COLOR_SIZE; 
-  size_t population_buffer_size = genome_size * POPULATION_SIZE;
+  size_t max_num_artists = POPULATION_SIZE + NUM_CHILDREN;
+  uint8_t * genomes;
 
-  /* genomes is a point to the buffer of all the genomes in the population */
-  void ** genomes;
-  unsigned int alloc_flags = cudaHostAllocPortable || cudaHostAllocMapped ||
-          cudaHostAllocWriteCombined;
+  std::vector<Artist> artists(max_num_artists);
+  for(Artist & a : artists)
+  {
+    CUDA_EC(cudaMallocManaged(&(a.genome), genome_size));
+    CUDA_EC(cudaMallocManaged(&(a.canvas), image_size));
+  }
 
-  /* And away we go... */
-  cudaHostAlloc(genomes, population_buffer_size, alloc_flags);
+  /* Create a random byte generator */
+  std::mt19937_64 rand_engine(RANDOM_SEED);
+  std::independent_bits_engine<std::mt19937_64, 8, uint8_t> rand_byte_generator(rand_engine);
 
+  /* Randomize the genomes, blank out the canvases */
+  for(Artist & a : artists)
+  {
+    for(size_t i = 0; i < image_size; i++)
+    {
+      if(i < genome_size) {     
+        a.genome[i] = rand_byte_generator();         
+      }
 
-
-
-
-
-
+      a.canvas[i] = 255;
+    }
+  }
+                    
 
 
 

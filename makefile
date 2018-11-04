@@ -1,5 +1,5 @@
 NAME = triangles
-OBJS = params.o lodepng.o image.o triangle.o
+OBJS = params.o lodepng.o image.o triangle.o artist.o
 
 # Determine which OS we're on to determine the compiler
 OS := $(shell uname -s)
@@ -32,6 +32,9 @@ image.o: image.cpp image.h
 
 triangle.o: triangle.cpp triangle.h
 	$(NVCC) $(CCFLAGS) triangle.cpp
+
+artist.o: artist.cpp artist.h
+	$(NVCC) $(CCFLAGS) artist.cpp
   
 # Utility
 clean: 
