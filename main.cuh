@@ -12,4 +12,4 @@
 #include "params.h"
 #include "image.h"
 #include "triangle.h"
-#include "artist.h"
+#include "artist.cuh"

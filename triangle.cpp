@@ -6,20 +6,32 @@ size_t BG_COLOR_SIZE = 4;
 size_t TRIANGLE_LIST_BEGIN = BG_COLOR_SIZE;
 size_t TRIANGLE_SIZE = sizeof(Triangle);
 
-/* Check if two triangles are the same. Ignores "visible" trait. */
-bool operator==(const Triangle& lhs, const Triangle& rhs)
+/* Copies a Host Triangle to a Device Triangle_d */
+Triangle_d convertTriangleH2D(Triangle & tri, unsigned width, unsigned height)
 {
-    return  lhs.x1 == rhs.x1 &&
-            lhs.y1 == rhs.y1 &&
+  Triangle_d tri_d;
+  
+  tri_d.x1 = UITF(tri.x1) * width;
+  tri_d.y1 = UITF(tri.y1) * height;
 
-            lhs.x2 == rhs.x2 &&
-            lhs.y2 == rhs.y2 &&
+  tri_d.x2 = UITF(tri.x2) * width;
+  tri_d.y2 = UITF(tri.y2) * height;
+ 
+  tri_d.x3 = UITF(tri.x3) * width;
+  tri_d.y3 = UITF(tri.y3) * height;
 
-            lhs.x3 == rhs.x3 &&
-            lhs.y3 == rhs.y3 &&
+  return tri_d;
+}
 
-            lhs.r == rhs.r &&
-            lhs.b == rhs.b &&
-            lhs.g == rhs.g &&
-            lhs.a == rhs.a;
+/* Copies the RGBA information of a Triangle to a RGBA struct */
+RGBA convertRGBA(Triangle & tri)
+{
+  RGBA color;
+
+  color.r = tri.r;
+  color.g = tri.g;
+  color.b = tri.b;
+  color.a = tri.a;
+
+  return color;
 }

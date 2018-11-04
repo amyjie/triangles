@@ -3,6 +3,9 @@
 
 #include <cstdlib>
 
+/* Takes a uint8_t and turns it into a float [0,1) */
+#define UITF(num) (((float)num / 255))
+
 typedef u_int8_t uint8_t;
 
 /*
@@ -46,14 +49,28 @@ struct Pixel {
 
 typedef Pixel RGBA;
 
+/* Can't send bit packed structures to GPUs */
+struct Triangle_d {
+  float x1;
+  float y1;  
+  float x2;
+  float y2;
+  float x3;
+  float y3;
+};
+
+/* Copies a Host Triangle to a Device Triangle_d */
+
 /* Mark important offsets */
 extern size_t BG_COLOR_OFFSET;
 extern size_t BG_COLOR_SIZE;
 extern size_t TRIANGLE_LIST_BEGIN;
 extern size_t TRIANGLE_SIZE;
 
-/* Compare two triangles */
-bool operator==(const Triangle& lhs, const Triangle& rhs);
+/* Copies a Host Triangle to a Device Triangle_d */
+Triangle_d convertTriangleH2D(Triangle & tri, unsigned width, unsigned height);
 
+/* Copies the RGBA information of a Triangle to a RGBA struct */
+RGBA convertRGBA(Triangle & tri);
 
 #endif

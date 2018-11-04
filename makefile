@@ -18,8 +18,8 @@ NVCC:= $(HOST_COMPILER)
 triangles: main.o $(OBJS)
 	$(NVCC) main.o $(OBJS) $(DEBUG) -o $(NAME)
 
-main.o: main.h main.cpp params.h lodepng.h image.h
-	$(NVCC) $(CCFLAGS) $(IMAGE_MAGICK) main.cpp
+main.o: main.cuh main.cu params.h lodepng.h image.h artist.cuh
+	$(NVCC) $(CCFLAGS) $(IMAGE_MAGICK) main.cu
 
 params.o: params.h params.cpp
 	$(NVCC) $(CCFLAGS) params.cpp
@@ -33,8 +33,8 @@ image.o: image.cpp image.h
 triangle.o: triangle.cpp triangle.h
 	$(NVCC) $(CCFLAGS) triangle.cpp
 
-artist.o: artist.cpp artist.h
-	$(NVCC) $(CCFLAGS) artist.cpp
+artist.o: artist.cu artist.cuh
+	$(NVCC) $(CCFLAGS) artist.cu
   
 # Utility
 clean: 
