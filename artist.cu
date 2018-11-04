@@ -26,6 +26,7 @@ void setCanvasColor(RGBA * canvas, size_t canvas_size, RGBA color)
 }
 /* Convenience function for calculating edges */
 __device__
+inline
 bool edgeFunction(float x1, float y1, float x2, float y2, float px3, float py3)
 {
   return ((px3 - x1) * (y2 - y1) - (py3 - y1) * (x2 - x1) >= 0);
@@ -33,6 +34,7 @@ bool edgeFunction(float x1, float y1, float x2, float y2, float px3, float py3)
 
 /* Convenience function for compositing two colors */
 __device__
+inline
 Pixel blendColors(RGBA color1, RGBA color2)
 {
   Pixel p; 
@@ -65,13 +67,16 @@ Pixel blendColors(RGBA color1, RGBA color2)
 
 /* Draws a triangle to a canvas */
 __global__
-void drawTriangle(Pixel * canvas, Triangle_d tri, RGBA color, size_t canvas_size, unsigned width, unsigned height)
+//void drawTriangle(Pixel * canvas, Triangle_d tri, RGBA color, size_t canvas_size, unsigned width, unsigned height)
+void drawTriangle(Pixel * canvas, Triangle_d tri, RGBA color, size_t canvas_size, unsigned width, unsigned height, float max_x, float min_x, float max_y, float min_y)
 {
   size_t index = blockIdx.x * blockDim.x + threadIdx.x;
   if(index >= canvas_size) { return; }
 
   float px = (float)(index % width);
   float py = (float)(index / width);
+
+  if(px > max_x || px < min_x || py > max_y || py < min_y) { return; }
 
   bool draw_pixel = true;
   draw_pixel &= edgeFunction(tri.x1, tri.y1, tri.x2, tri.y2, px, py);
@@ -80,5 +85,20 @@ void drawTriangle(Pixel * canvas, Triangle_d tri, RGBA color, size_t canvas_size
 
   if(draw_pixel) {
     canvas[index] = blendColors(canvas[index], color);
+  }
+}
+
+/* Returns the average, per-pixel, per-channel RMSE */
+__global__
+void gradeArt(uint8_t * canvas, uint8_t * image, size_t image_size, double * diff)
+{
+
+  size_t index = blockIdx.x * blockDim.x + threadIdx.x;
+  if(index < image_size) {
+
+    double sq_error = (canvas[index] - image[index]) * (canvas[index] - image[index]);
+    double avg_error = sq_error / (double)image_size;
+
+    diff[index] = avg_error;
   }
 }

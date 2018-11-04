@@ -19,10 +19,25 @@
 /* Macro to fill in the specifics of a kernel <<<>>> */
 #define BAT(size, threads) ((size + (threads - 1)) / threads), (threads)
 
+/* Macro to return max/min numbers */
+#define MAX(x, y) (x >= y ? x : y)
+#define MIN(x, y) (x < y ? x : y)
+
+/* Size of Block for gradeArt() */
+#define GABS 512
+
 struct Artist {
+  /* Background color and list of triangles */      
   uint8_t * genome = 0;
+  /* RGBA uint8_t's representing pixels where the artist can draw to. */
   uint8_t * canvas = 0;
-  double fitness = 0;
+  /* Same size as canvas, the MSE's per channel are stored here. */
+  double  * diff   = 0;
+  /* Size of the canvas / GABS. This is space is used to accumulate errors. */
+  double  * error  = 0;
+  /* Convert the errors to a fitness score to rank artists */
+  double   fitness = 0;
+  /* So the artists don't block each other */
   cudaStream_t stream;
 };
 
@@ -36,6 +51,10 @@ void setCanvasColor(RGBA * canvas, size_t canvas_size, RGBA color);
 
 /* Draws a triangle to a canvas */
 __global__
-void drawTriangle(Pixel * canvas, Triangle_d tri, RGBA color, size_t canvas_size, unsigned width, unsigned height);
+void drawTriangle(Pixel * canvas, Triangle_d tri, RGBA color, size_t canvas_size, unsigned width, unsigned height, float max_x, float min_x, float max_y, float min_y);
+
+/* Returns the average, per-pixel, per-channel RMSE */
+__global__
+void gradeArt(uint8_t * canvas, uint8_t * image, size_t image_size, double * diff);
 
 #endif

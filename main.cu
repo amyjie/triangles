@@ -26,9 +26,9 @@ int main(int argc, char ** argv)
   /* Copy it to the GPU */
   size_t image_num_pixels = width * height;
   size_t image_size = 4 * image_num_pixels;
-  uint8_t * cuda_image = 0;
-  cudaMallocManaged(&cuda_image, image_size);
-  memcpy(cuda_image, image, image_size);
+  uint8_t * image_d = 0;
+  cudaMallocManaged(&image_d, image_size);
+  memcpy(image_d, image, image_size);
 
   /* Open a file to write the results */
   std::ofstream output_file;
@@ -49,7 +49,7 @@ int main(int argc, char ** argv)
 
   output_file.open("output/" + file_name + ".tsv");
 
-  /* Allocate genomes on the GPU */
+  /* Allocate genomes, and canvases on the GPU */
   size_t genome_size = GENOME_LENGTH * TRIANGLE_SIZE + BG_COLOR_SIZE; 
   size_t max_num_artists = POPULATION_SIZE + NUM_CHILDREN;
 
@@ -58,6 +58,7 @@ int main(int argc, char ** argv)
   {
     CUDA_EC(cudaMallocManaged(&(a.genome), genome_size));
     CUDA_EC(cudaMallocManaged(&(a.canvas), image_size));
+    CUDA_EC(cudaMallocManaged(&(a.diff),   image_size * sizeof(double)));
   }
 
   /* Create a random byte generator */
@@ -95,11 +96,27 @@ int main(int argc, char ** argv)
       /* Convert the Triangle into unpacked structs for the device. */      
       Triangle_d tri_d = convertTriangleH2D(tri, width, height);
       RGBA color = convertRGBA(tri);
+      
+      float max_x = MAX(MAX(tri_d.x1, tri_d.x2), tri_d.x3);
+      float max_y = MAX(MAX(tri_d.y1, tri_d.y2), tri_d.y3);
 
-      drawTriangle<<<BAT(image_num_pixels,256)>>>((Pixel *)a.canvas, tri_d, color, image_num_pixels, width, height);
+      float min_x = MIN(MIN(tri_d.x1, tri_d.x2), tri_d.x3);
+      float min_y = MIN(MIN(tri_d.y1, tri_d.y2), tri_d.y3);
+
+      drawTriangle<<<BAT(image_num_pixels,128)>>>((Pixel *)a.canvas, tri_d, color, image_num_pixels, width, height, max_x, min_x, max_y, min_y);
     }
   }
   cudaDeviceSynchronize();
+ // std::cout << artists[0].fitness << std::endl;
+
+  /* Grade each canvas */
+  for(Artist a : artists)
+  {
+    gradeArt<<<BAT(image_size,512)>>>(a.canvas, image_d, image_size, a.diff);
+  }  
+  cudaDeviceSynchronize();
+
+//  std::cout << artists[0].fitness << std::endl;
 
                     
 

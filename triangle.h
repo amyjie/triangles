@@ -46,8 +46,20 @@ struct Pixel {
   uint8_t b;
   uint8_t a;
 };
-
 typedef Pixel RGBA;
+
+/* Makes sending points more readable */
+struct Coord {
+  float x;
+  float y;  
+};
+
+/* Edge equations for triangles */
+struct Edge {
+  float a;
+  float b;
+  float c; 
+};
 
 /* Can't send bit packed structures to GPUs */
 struct Triangle_d {

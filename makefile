@@ -13,7 +13,7 @@ endif
 DEBUG = -O3
 CCFLAGS = -std=c++11 -c $(DEBUG)
 
-NVCC:= $(HOST_COMPILER)
+NVCC:= $(HOST_COMPILER) -arch=sm_60
 
 triangles: main.o $(OBJS)
 	$(NVCC) main.o $(OBJS) $(DEBUG) -o $(NAME)
