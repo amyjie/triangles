@@ -102,3 +102,42 @@ void gradeArt(uint8_t * canvas, uint8_t * image, size_t image_size, double * dif
     diff[index] = avg_error;
   }
 }
+
+/* A metaphor for life. Takes an artists error grid and computes partial sums,
+   accumulating them into a.error so they can be summed in the CPU becaues I 
+   don't have time to learn how to do recursive, efficient, parallel summation.
+*/
+__global__
+void accumulateErrors(double * input, double * output, size_t len)
+{
+  /* Load part of the input into shared memory to improve partial sum */
+  __shared__ double partial_sum[2 * GABS];
+
+  size_t index = threadIdx.x;
+  size_t start = 2 * GABS * blockIdx.x;
+
+  if(start + index < len) {
+    partial_sum[index] = input[start + index];
+  } else {
+    partial_sum[index] = 0;
+  }
+
+  if(start + GABS + index < len) {
+    partial_sum[GABS + index] = input[start + GABS + index];
+  } else {
+    partial_sum[GABS + index] = 0;
+  }
+ 
+  /* Begin reducing the sums in shared memory */
+  for(size_t stride = GABS; stride >= 1; stride >>= 1) {
+    __syncthreads();
+    if(index < stride) {
+      partial_sum[index] += partial_sum[index + stride];
+    }
+  }
+
+  /* Write the partial sum back out */
+  if(index == 0) {
+    output[blockIdx.x] = partial_sum[0];
+  }
+}

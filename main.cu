@@ -26,6 +26,7 @@ int main(int argc, char ** argv)
   /* Copy it to the GPU */
   size_t image_num_pixels = width * height;
   size_t image_size = 4 * image_num_pixels;
+  size_t num_error_blocks = image_size / GABS;
   uint8_t * image_d = 0;
   cudaMallocManaged(&image_d, image_size);
   memcpy(image_d, image, image_size);
@@ -59,6 +60,7 @@ int main(int argc, char ** argv)
     CUDA_EC(cudaMallocManaged(&(a.genome), genome_size));
     CUDA_EC(cudaMallocManaged(&(a.canvas), image_size));
     CUDA_EC(cudaMallocManaged(&(a.diff),   image_size * sizeof(double)));
+    CUDA_EC(cudaMallocManaged(&(a.error),  (image_size / GABS) * sizeof(double)));
   }
 
   /* Create a random byte generator */
@@ -115,6 +117,50 @@ int main(int argc, char ** argv)
     gradeArt<<<BAT(image_size,512)>>>(a.canvas, image_d, image_size, a.diff);
   }  
   cudaDeviceSynchronize();
+
+  /* Accumulate errors into a sum */
+  for(Artist a : artists)
+  {
+    accumulateErrors<<<BAT(image_size,GABS),GABS,a.stream>>>(a.diff, a.error, image_size);
+  }  
+  cudaDeviceSynchronize();
+
+  for(Artist & a : artists)
+  {
+    double error = 0;
+    for(size_t i = 0; i < num_error_blocks; i++)
+    {
+      error += a.error[i]; 
+    }
+    error /= num_error_blocks;
+    a.fitness = 1 / std::sqrt(error);
+  }
+
+	/* Calculate the average fitness & std dev of the artists */
+	double std_dev = 0.0;
+	double avg_fitness = 0.0;
+	for(Artist a : artists) 
+	{
+		avg_fitness += a.fitness;
+	}
+	avg_fitness /= max_num_artists;
+
+	/* Calculate the std dev of the artists */
+	for(Artist a : artists) 
+	{
+		std_dev += pow(a.fitness - avg_fitness, 2);
+		std_dev = sqrt(std_dev/max_num_artists);
+	}
+
+  std::cout << "Avg Fitness: " << avg_fitness << std::endl;
+  std::cout << "Std Dev: " << std_dev << std::endl;
+
+  /* Sort the artists by descending fitness */
+  std::sort(artists.begin(), artists.end(), [](Artist & a, Artist & b) {
+    return a.fitness > b.fitness;    
+  });
+
+
 
 //  std::cout << artists[0].fitness << std::endl;
 

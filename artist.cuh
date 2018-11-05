@@ -37,6 +37,8 @@ struct Artist {
   double  * error  = 0;
   /* Convert the errors to a fitness score to rank artists */
   double   fitness = 0;
+  /* The amount of times this artist is allowed to reproduce */
+  double   reproduction = 0;
   /* So the artists don't block each other */
   cudaStream_t stream;
 };
@@ -56,5 +58,12 @@ void drawTriangle(Pixel * canvas, Triangle_d tri, RGBA color, size_t canvas_size
 /* Returns the average, per-pixel, per-channel RMSE */
 __global__
 void gradeArt(uint8_t * canvas, uint8_t * image, size_t image_size, double * diff);
+
+/* A metaphor for life. Takes an artists error grid and computes partial sums,
+   accumulating them into a.error so they can be summed in the CPU becaues I 
+   don't have time to learn how to do recursive, efficient, parallel summation.
+*/
+__global__
+void accumulateErrors(double * input, double * output, size_t len);
 
 #endif
