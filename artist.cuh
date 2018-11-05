@@ -38,7 +38,7 @@ struct Artist {
   /* Convert the errors to a fitness score to rank artists */
   double   fitness = 0;
   /* The amount of times this artist is allowed to reproduce */
-  double   reproduction = 0;
+  double reproduce = 0;
   /* So the artists don't block each other */
   cudaStream_t stream;
 };
