@@ -22,7 +22,8 @@ int main(int argc, char ** argv)
   unsigned width, height;
 	uint8_t * image = openImage(IMAGE_PATH, width, height);
   char artist_name[] = "artist.png";
-//  std::cout << "Opened: " << IMAGE_PATH << "\t(" << width << "x" << height << ")" << std::endl;
+  char orignal_name[] = "orginal.png";
+  saveImage(orignal_name, image, width, height);
 
   /* Copy it to the GPU */
   size_t image_num_pixels = width * height;
@@ -31,25 +32,6 @@ int main(int argc, char ** argv)
   uint8_t * image_d = 0;
   cudaMallocManaged(&image_d, image_size);
   memcpy(image_d, image, image_size);
-
-  /* Open a file to write the results */
-  std::ofstream output_file;
-
-  std::string image_path(IMAGE_PATH);
-  std::string genome_length(std::to_string(GENOME_LENGTH));
-  std::string pop_size(std::to_string(POPULATION_SIZE));
-  std::string seed(std::to_string(RANDOM_SEED));
-  std::string xover(std::to_string(XOVER_CHANCE));
-  std::string mrate(std::to_string(MUTATION_RATE));
-
-  std::string file_name = image_path;
-  file_name += "_" + genome_length;
-  file_name += "_" + pop_size;
-  file_name += "_" + xover;
-  file_name += "_" + mrate;
-  file_name += "_" + seed;
-
-  output_file.open("output/" + file_name + ".tsv");
 
   /* Allocate genomes, and canvases on the GPU */
   size_t genome_size = GENOME_LENGTH * TRIANGLE_SIZE + BG_COLOR_SIZE; 
@@ -104,7 +86,7 @@ int main(int argc, char ** argv)
       setCanvasColor<<<BAT(image_num_pixels,256),0,a.stream>>>(canvas, image_num_pixels, bg_color);
     }
 
-    /* Draw the triangles to their respective canvases */
+    /* Draw the triangles to their respective canvases and grade them. */
     for(Artist a : artists)
     {
       /* If the triangle already has a fitness, it remains unchanged. */      
@@ -128,29 +110,16 @@ int main(int argc, char ** argv)
 
         drawTriangle<<<BAT(image_num_pixels,128),0,a.stream>>>((Pixel *)a.canvas, tri_d, color, image_num_pixels, width, height, max_x, min_x, max_y, min_y);
       }
-    }
-
-    /* Grade each canvas */
-    for(Artist a : artists)
-    {
-      /* If the triangle already has a fitness, it remains unchanged. */      
-      if(a.fitness != 0) { continue; }
-
       gradeArt<<<BAT(image_size,512),0,a.stream>>>(a.canvas, image_d, image_size, a.diff);
-    }  
-
-    /* Accumulate errors into a sum */
-    for(Artist a : artists)
-    {
-      /* If the triangle already has a fitness, it remains unchanged. */      
-      if(a.fitness != 0) { continue; }
-
       accumulateErrors<<<BAT(image_size,GABS),GABS,a.stream>>>(a.diff, a.error, image_size);
-    }  
+    }
     cudaDeviceSynchronize();
 
     for(Artist & a : artists)
     {
+      /* If the triangle already has a fitness, it remains unchanged. */      
+      if(a.fitness != 0) { continue; }
+
       double error = 0;
       for(size_t i = 0; i < num_error_blocks; i++)
       {
@@ -291,14 +260,13 @@ int main(int argc, char ** argv)
     if(best_fitness != artists[0].fitness) { 
       best_fitness = artists[0].fitness;
       saveImage(artist_name, artists[0].canvas, width, height);
-      std::cout << effort << "\t" << best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
     }
 
-    /* Print things */
-    //output_file << effort << "\t" << best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
+    /* Print fitness data to the standard buffer */
+    std::cout << effort << "\t" << best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
   }     
 
-  output_file.close();
-
+  /* Flush the buffer */
+  std::cout << std::endl;
   return 0;
 }
