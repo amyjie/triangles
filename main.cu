@@ -22,7 +22,7 @@ int main(int argc, char ** argv)
   unsigned width, height;
 	uint8_t * image = openImage(IMAGE_PATH, width, height);
   char artist_name[] = "artist.png";
-  std::cout << "Opened: " << IMAGE_PATH << "\t(" << width << "x" << height << ")" << std::endl;
+//  std::cout << "Opened: " << IMAGE_PATH << "\t(" << width << "x" << height << ")" << std::endl;
 
   /* Copy it to the GPU */
   size_t image_num_pixels = width * height;
@@ -88,6 +88,7 @@ int main(int argc, char ** argv)
 
   /* Main loop */
   size_t effort = POPULATION_SIZE;
+  double best_fitness = 0;
   for(;effort < EFFORT;)
   { 
     /* Draw the canvas background colors */
@@ -287,12 +288,14 @@ int main(int argc, char ** argv)
     effort += NUM_CHILDREN;
 
     /* Save the image to the web :3 */
-    saveImage(artist_name, artists[0].canvas, width, height);
+    if(best_fitness != artists[0].fitness) { 
+      best_fitness = artists[0].fitness;
+      saveImage(artist_name, artists[0].canvas, width, height);
+      std::cout << effort << "\t" << best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
+    }
 
     /* Print things */
-    double best_fitness = artists[0].fitness;
-    std::cout << effort << "\t" << best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
-    output_file << effort << "\t" << best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
+    //output_file << effort << "\t" << best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
   }     
 
   output_file.close();
