@@ -1,6 +1,7 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
+#include <random>
 #include <cstdlib>
 
 /* Takes a uint8_t and turns it into a float [0,1) */
@@ -78,11 +79,15 @@ extern size_t BG_COLOR_OFFSET;
 extern size_t BG_COLOR_SIZE;
 extern size_t TRIANGLE_LIST_BEGIN;
 extern size_t TRIANGLE_SIZE;
+extern size_t VIS_BYTE_INDEX;
 
 /* Copies a Host Triangle to a Device Triangle_d */
 Triangle_d convertTriangleH2D(Triangle & tri, unsigned width, unsigned height);
 
 /* Copies the RGBA information of a Triangle to a RGBA struct */
 RGBA convertRGBA(Triangle & tri);
+
+/* Returns a random triangle */
+Triangle genRandTriangle(std::independent_bits_engine<std::mt19937_64, 8, uint8_t> rand_byte_generator);
 
 #endif

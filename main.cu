@@ -28,7 +28,7 @@ int main(int argc, char ** argv)
   /* Copy it to the GPU */
   size_t image_num_pixels = width * height;
   size_t image_size = 4 * image_num_pixels;
-  size_t num_error_blocks = image_size / GABS;
+  size_t num_error_blocks = image_num_pixels / GABS;
   uint8_t * image_d = 0;
   cudaMallocManaged(&image_d, image_size);
   memcpy(image_d, image, image_size);
@@ -43,16 +43,18 @@ int main(int argc, char ** argv)
   {
     CUDA_EC(cudaMallocManaged(&(a.genome), genome_size));
     CUDA_EC(cudaMallocManaged(&(a.canvas), image_size));
-    CUDA_EC(cudaMallocManaged(&(a.diff),   image_size * sizeof(double)));
-    CUDA_EC(cudaMallocManaged(&(a.error),  (image_size / GABS) * sizeof(double)));
+    CUDA_EC(cudaMallocManaged(&(a.diff),   image_num_pixels * sizeof(float)));
+    CUDA_EC(cudaMallocManaged(&(a.error),  (image_num_pixels / GABS) * sizeof(float)));
   }
 
   /* Create a random byte generator */
   std::mt19937_64 rand_engine(RANDOM_SEED);
+  srand(RANDOM_SEED);
   std::independent_bits_engine<std::mt19937_64, 8, uint8_t> rand_byte_generator(rand_engine);
   std::exponential_distribution<double> artist_repro_dist(3.5);
   std::binomial_distribution<size_t> b_dist(num_bits, MUTATION_RATE);
   std::uniform_int_distribution<size_t> bit_picker(0, (num_bits - 1));
+  std::uniform_int_distribution<size_t> triangle_picker(0, (GENOME_LENGTH - 1));
 
   /* Create a CUDA stream, randomize the genomes */
   for(Artist & a : artists)
@@ -60,17 +62,18 @@ int main(int argc, char ** argv)
     /* Create the streams for each artist */
     CUDA_EC(cudaStreamCreate(&(a.stream)));
 
-    for(size_t i = 0; i < image_size; i++)
+    Triangle * tri_list = (Triangle *)(a.genome + TRIANGLE_LIST_BEGIN);
+    for(size_t i = 0; i < GENOME_LENGTH; i++)
     {
-      if(i < genome_size) {     
-        a.genome[i] = rand_byte_generator();         
-      }
+      tri_list[i] = genRandTriangle(rand_byte_generator);
+      tri_list[i].visible = 0;
     }
   }
 
   /* Main loop */
   size_t effort = POPULATION_SIZE;
   double best_fitness = 0;
+  size_t sub_index = 0;
   for(;effort < EFFORT;)
   { 
     /* Draw the canvas background colors */
@@ -110,8 +113,8 @@ int main(int argc, char ** argv)
 
         drawTriangle<<<BAT(image_num_pixels,128),0,a.stream>>>((Pixel *)a.canvas, tri_d, color, image_num_pixels, width, height, max_x, min_x, max_y, min_y);
       }
-      gradeArt<<<BAT(image_size,512),0,a.stream>>>(a.canvas, image_d, image_size, a.diff);
-      accumulateErrors<<<BAT(image_size,GABS),GABS,a.stream>>>(a.diff, a.error, image_size);
+      gradeArt<<<BAT(image_num_pixels,512),0,a.stream>>>((Pixel *)a.canvas, (Pixel *)image_d, image_num_pixels, a.diff);
+      accumulateErrors<<<BAT(image_num_pixels,GABS),GABS,a.stream>>>(a.diff, a.error, image_num_pixels);
     }
     cudaDeviceSynchronize();
 
@@ -174,7 +177,6 @@ int main(int argc, char ** argv)
        reproduce.
     */
     size_t kid_index = POPULATION_SIZE;
-    size_t sub_index = 0;
     for(size_t i = 0; i < NUM_CHILDREN; i++)
     {
       double r = 2;
@@ -204,7 +206,7 @@ int main(int argc, char ** argv)
       baby.fitness = 0;
 
       /* Only crossover $(crossover_chance)% of the time */
-      r = (double)(rand()/RAND_MAX);
+      r = (double)rand()/RAND_MAX;
       if(r < XOVER_CHANCE)
       {
         /* Where in the genome to crossover at */
@@ -251,6 +253,28 @@ int main(int argc, char ** argv)
         uint8_t mask = (uint8_t)GETMASK(intra_bit_index, 1);  
         baby.genome[byte_index] ^= mask;
       }
+
+        /* Replace a triangle with a random triangle */
+        r = (double)rand()/RAND_MAX;
+        Triangle * tri_list = (Triangle *)(baby.genome + TRIANGLE_LIST_BEGIN);
+        if(r < MACRO_MUTATION_RATE)
+        {
+          size_t tri_index = triangle_picker(rand_engine);
+          tri_list[tri_index] = genRandTriangle(rand_byte_generator);    
+        }
+
+        /* Swap the position of two triangles */
+        r = (double)rand()/RAND_MAX;
+        if(r < MACRO_MUTATION_RATE)
+        {
+          size_t tri_index  = triangle_picker(rand_engine);
+          size_t tri_index2 = triangle_picker(rand_engine);
+          Triangle swap_tri;
+          
+          swap_tri = tri_list[tri_index];     
+          tri_list[tri_index] = tri_list[tri_index2];
+          tri_list[tri_index2] = swap_tri;
+        }
     }
 
     /* Update the effort */
@@ -268,5 +292,6 @@ int main(int argc, char ** argv)
 
   /* Flush the buffer */
   std::cout << std::endl;
+
   return 0;
 }

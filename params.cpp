@@ -27,6 +27,9 @@ Xover_type XOVER_TYPE = Xover_type::TRIANGLE;
 /* Chance, per bit, of being flipped each generation. Defaults to 0.005. */
 double MUTATION_RATE = 0.005;
 
+/* Chance to swap two triangles, or randomize a triangle. */
+double MACRO_MUTATION_RATE = 0.5;
+
 void parseArgs(int argc, char ** argv)
 {
     int c;
@@ -41,6 +44,7 @@ void parseArgs(int argc, char ** argv)
             {"number-of-children",  required_argument, 0, 'c'},
             {"random-seed",         required_argument, 0, 'r'},
             {"mutation-rate",       required_argument, 0, 'm'},
+            {"macro-mutation-rate", required_argument, 0, 'b'},
             {"crossover-type",      required_argument, 0, 't'},
             {"crossover-chance",    required_argument, 0, 'x'},
             {0, 0, 0, 0}
@@ -50,7 +54,7 @@ void parseArgs(int argc, char ** argv)
         int option_index = 0;
 
         /* Short codes for characters */
-        const char * short_options = "i:e:g:p:c:r:m:t:x:";
+        const char * short_options = "i:e:g:p:c:r:m:b:t:x:";
 
         c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
@@ -156,6 +160,15 @@ void parseArgs(int argc, char ** argv)
                 if(MUTATION_RATE < 0 || MUTATION_RATE > 1)
                 { 
                     printf("Mutation rate must be between 0.0 and 1.0.\nRate provided:%f", MUTATION_RATE);
+                    exit(1);
+                }
+                break;
+            }
+            case 'b': {
+                MACRO_MUTATION_RATE = std::stod(optarg);
+                if(MACRO_MUTATION_RATE < 0 || MACRO_MUTATION_RATE > 1)
+                { 
+                    printf("Macro mutation rate must be between 0.0 and 1.0.\nRate provided:%f", MACRO_MUTATION_RATE);
                     exit(1);
                 }
                 break;

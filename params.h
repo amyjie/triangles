@@ -51,6 +51,9 @@ extern Xover_type XOVER_TYPE;
 /* Chance, per bit, of being flipped each generation. Defaults to 0.005. */ 
 extern double MUTATION_RATE;
 
+/* Chance to swap two triangles, or randomize a triangle. Defaults to 0.5 */
+extern double MACRO_MUTATION_RATE;
+
 /* Puts all the arguments into the variables */
 void parseArgs(int argc, char ** argv);
 

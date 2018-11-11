@@ -23,3 +23,13 @@ test
 # OS X Crap
 .DS_Store
 
+# SQLite Databases
+*.db
+*.db-journal
+
+# Errant python scripts
+*.py
+
+# Errant output files
+*.txt
+*.tsv

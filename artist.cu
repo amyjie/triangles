@@ -1,7 +1,5 @@
 #include "artist.cuh"
 
-/* Scores a canvas */
-
 /* Sets the canvas to all white, opcaity 100% */
 __global__
 void blankCanvas(uint8_t * canvas, size_t canvas_size)
@@ -90,15 +88,29 @@ void drawTriangle(Pixel * canvas, Triangle_d tri, RGBA color, size_t canvas_size
 
 /* Returns the average, per-pixel, per-channel RMSE */
 __global__
-void gradeArt(uint8_t * canvas, uint8_t * image, size_t image_size, double * diff)
+void gradeArt(Pixel * canvas, Pixel * image, size_t num_pixels, float * diff)
 {
 
   size_t index = blockIdx.x * blockDim.x + threadIdx.x;
-  if(index < image_size) {
+  Pixel & ip = image[index];
+  Pixel & cp = canvas[index];
 
-    double sq_error = (canvas[index] - image[index]) * (canvas[index] - image[index]);
-    double avg_error = sq_error / (double)image_size;
+  if(index < num_pixels) {
+    /* Calculate error per color channel */
+    float r = (((float)ip.r * ((float)ip.a/255)) - ((float)cp.r * ((float)cp.a/255)));
+    float g = (((float)ip.g * ((float)ip.a/255)) - ((float)cp.g * ((float)cp.a/255)));
+    float b = (((float)ip.b * ((float)ip.a/255)) - ((float)cp.b * ((float)cp.a/255)));
 
+    /* Square the error */
+    r = r * r;
+    g = g * g;
+    b = b * b;
+
+    /* Sum the error */
+    float sq_error = r + g + b;
+    float avg_error = sq_error / (float)num_pixels;
+
+    /* Save the error to another array so it can be summed in parallel */
     diff[index] = avg_error;
   }
 }
@@ -108,7 +120,7 @@ void gradeArt(uint8_t * canvas, uint8_t * image, size_t image_size, double * dif
    don't have time to learn how to do recursive, efficient, parallel summation.
 */
 __global__
-void accumulateErrors(double * input, double * output, size_t len)
+void accumulateErrors(float * input, float * output, size_t len)
 {
   /* Load part of the input into shared memory to improve partial sum */
   __shared__ double partial_sum[2 * GABS];
