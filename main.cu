@@ -284,10 +284,9 @@ int main(int argc, char ** argv)
     if(best_fitness != artists[0].fitness) { 
       best_fitness = artists[0].fitness;
       saveImage(artist_name, artists[0].canvas, width, height);
+      /* Print fitness data to the standard buffer */
+      std::cout << effort << "\t" << best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
     }
-
-    /* Print fitness data to the standard buffer */
-    std::cout << effort << "\t" << best_fitness << "\t" << avg_fitness << "\t" << std_dev << "\n";
   }     
 
   /* Flush the buffer */
